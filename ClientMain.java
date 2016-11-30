@@ -2,6 +2,10 @@ package assignment7;
 
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -83,9 +87,6 @@ public class ClientMain extends Application{
 					availableClientsCur.add("Group");
 					chatters.setItems(availableClientsCur);
 					initView2();//actual chat room
-					
-
-					
 				});
 				userInterfaceGrid.getChildren().addAll(userID, userPassword,createBtn);
 				userInterfaceStage.setScene(userInterfaceScene);
@@ -96,12 +97,11 @@ public class ClientMain extends Application{
 		Stage chatInterface = new Stage();
 		//make chat room interface
 		Button sendBtn = new Button("Send");
-		Button inviteBtn = new Button("To: ");
 		Button leaveBtn = new Button("LEAVE");
 		// Panel p to hold the label and text field 
 		GridPane paneForTextField = new GridPane(); 
 		paneForTextField.setHgap(5.0);
-		paneForTextField.setVgap(5.0);
+		paneForTextField.setVgap(10.0);
 		paneForTextField.setPadding(new Insets(10, 10, 10, 10)); 
 		paneForTextField.setStyle("-fx-border-color: pink");  
 		tf.setPromptText("Enter your message...."); 
@@ -120,13 +120,25 @@ public class ClientMain extends Application{
 		Label lb = new Label("Friends: ");
 		HBox invite = new HBox();
 		invite.setSpacing(15);
-		invite.getChildren().addAll(lb, chatters, inviteBtn);
+		invite.getChildren().addAll(lb, chatters);
+		//group adding interface
+		TextField groupName = new TextField();
+		groupName.setPrefWidth(110);
+		groupName.setPromptText("Group name");
+		TextField groupMembers = new TextField();
+		groupMembers.setPrefWidth(275);
+		groupMembers.setPromptText("Enter all members to invite");
+		Button makeGroup = new Button("make");
+		HBox addGroup = new HBox();
+		addGroup.setSpacing(15);
+		addGroup.getChildren().addAll(groupName, groupMembers,makeGroup);
 		
+		GridPane.setConstraints(addGroup,0, 4);
 		GridPane.setConstraints(leaveBtn, 0, 3);
 		GridPane.setConstraints(input,0,1);
 		GridPane.setConstraints(invite,0,2);
 		GridPane.setConstraints(leaveBtn, 0, 7);
-		paneForTextField.getChildren().addAll( area, input, invite, leaveBtn);
+		paneForTextField.getChildren().addAll(addGroup, area, input, invite, leaveBtn);
 
 
 		// Create a scene and place it in the stage 
@@ -139,16 +151,33 @@ public class ClientMain extends Application{
 			//figure our receiver's ID
 			String receiver = chatters.getValue();
 			String sender = ID;
+			// if sending to Group, all clients must accept
 			if (receiver.equals("Group")){
 				String x = "$" + ID + ": " + tf.getText();
 			writer.println("$" + ID + ": " + tf.getText());
 			}
-			else{
+			//elsif it's a distinct group, then selected clients must accept
+			else if(receiver.charAt(0) == '*'){ 
+				// syntax: *GroupName#senderID#actualMessage
+				writer.println(receiver + "#" + sender + "#" + ID + ": " + tf.getText());
+			}
+			//else it's one-to-one and only two clients must accept
+			else{ 
 			writer.println(sender + "#" + receiver + "#" + ID + ": " + tf.getText());
 			}
 			writer.flush();
 			tf.setText("");
 			tf.requestFocus();
+		});
+		
+		makeGroup.setOnAction( e -> {
+			String name = "*" + groupName.getText(); //get the group name from the textField
+			availableClientsCur.add(name);//put it into the Observable List for drop-down menu
+			String Line = groupMembers.getText();//read a Line of String from textField and parse
+			Scanner LineProcess = new Scanner (Line);
+			ArrayList<String> groupIDs = parseIDs(LineProcess);// groupIDs holds all IDs of clients in a group
+			ServerMain.getAllIds.put(name, groupIDs); //holds groupName as string key and List of ID's as values
+			// now, given "groupName" maps to appropriate "List of Cliend IDs" in that specific group"
 		});
 	}
 
@@ -182,8 +211,21 @@ public class ClientMain extends Application{
 					if(message.charAt(i) == '$'){
 						actualMsg = message.substring(1,message.length());
 						ta.appendText(actualMsg + "\n");						
+					}	
+					else if(message.charAt(i) == '*'){
+						//message = *GroupName#senderID#actualMessage
+						
+						//get groupName
+						//get the ArrayList that holds all IDs that belong to this group
+						//   for all Clients
+						//      if (Client.ID == one of the ID in the ArrayList)
+						//		    Client accetps a message
+						//		else
+						//			Client does not accept a message
+						//		endif
+						//   end forLoop
+						//done 
 					}
-					
 					else{
 					while((i < message.length())){
 						if(message.charAt(i) == '#'){
@@ -210,18 +252,14 @@ public class ClientMain extends Application{
 							
 						availableClientsCur.add(addOnlineList);
 						chatters.setItems(availableClientsCur);
-						
-						
 						}
-						if (ID.equals(null)){}
+						if (ID == null){}
 						else{
 						writer.println("online#"  + ID);
 						writer.flush();
 						}
 					}
 					else{
-					
-					
 					while((i < message.length())){
 						if(message.charAt(i) == '#'){
 							i++;
@@ -231,20 +269,14 @@ public class ClientMain extends Application{
 						receiverID = receiverID + message.charAt(i);
 						i++;
 					}
-					actualMsg = message.substring(hashIndex2, message.length());
-					
-					
-					//print the wanted message IF the current client ID matches
-					//either receiverID or senderID
+					actualMsg = message.substring(hashIndex2, message.length());			
+					//print the wanted message IF the current client ID matches either receiverID or senderID
 					if(idMatch(senderID, receiverID)){
 						ta.appendText(actualMsg + "\n");						
 					}
 					
 					}
-					
-					
-				}
-					
+				}			
 				}
 			} catch (IOException ex) {
 				ex.printStackTrace();
@@ -263,5 +295,20 @@ public class ClientMain extends Application{
 			return true;
 		}
 		return false;
+	}
+	
+	/**
+	 * 
+	 * @param line is a scanner connected to a line of String
+	 * @return a List of Strings that holds all IDs of clients in a group
+	 */
+	private ArrayList<String> parseIDs(Scanner line){
+		ArrayList<String> allIDs = new ArrayList<String>();
+		
+		while(line.hasNext()){
+			String ID = line.next();
+			allIDs.add(ID);
+		}
+		return allIDs;
 	}
 }

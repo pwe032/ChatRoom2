@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Observable;
 
 import javafx.collections.FXCollections;
@@ -14,6 +16,7 @@ import javafx.collections.ObservableList;
 public class ServerMain extends Observable {
 	
 	public static ObservableList<String> availableClients = FXCollections.observableArrayList();
+	public static Map<String, ArrayList<String>> getAllIds = new HashMap <String, ArrayList<String>>(); //create a map that holds groupName as string key and List of ID's as values
 	
 	public static void main(String[] args) {
 		try {
