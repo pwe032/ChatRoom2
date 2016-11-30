@@ -196,7 +196,8 @@ public class ClientMain extends Application{
 					}
 					if (senderID.equals("online") == true){
 						addOnlineList = message.substring(i, message.length());
-						if (addOnlineList.equals(null)){}
+						if (addOnlineList.equals(null)){
+						}
 						else if(availableClientsCur.indexOf(addOnlineList) == -1 && addOnlineList.equals(ID) == false)
 						{
 							availableClientsCur.add(addOnlineList);
@@ -212,10 +213,11 @@ public class ClientMain extends Application{
 						
 						
 						}
-						
+						if (ID.equals(null)){}
+						else{
 						writer.println("online#"  + ID);
 						writer.flush();
-						
+						}
 					}
 					else{
 					
