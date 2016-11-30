@@ -84,7 +84,7 @@ public class ClientMain extends Application{
 					writer.flush();
 					
 					userInterfaceStage.close();
-					availableClientsCur.add("Group");
+					availableClientsCur.add("Everyone");
 					chatters.setItems(availableClientsCur);
 					initView2();//actual chat room
 				});
@@ -152,14 +152,14 @@ public class ClientMain extends Application{
 			String receiver = chatters.getValue();
 			String sender = ID;
 			// if sending to Group, all clients must accept
-			if (receiver.equals("Group")){
+			if (receiver.equals("Everyone")){
 				String x = "$" + ID + ": " + tf.getText();
 			writer.println("$" + ID + ": " + tf.getText());
 			}
 			//elsif it's a distinct group, then selected clients must accept
 			else if(receiver.charAt(0) == '*'){ 
 				// syntax: *GroupName#senderID#actualMessage
-				writer.println(receiver + "#" + sender + "#" + ID + ": " + tf.getText());
+				writer.println("@" + receiver + "#" + ID + ": " + tf.getText());
 			}
 			//else it's one-to-one and only two clients must accept
 			else{ 
@@ -172,12 +172,21 @@ public class ClientMain extends Application{
 		
 		makeGroup.setOnAction( e -> {
 			String name = "*" + groupName.getText(); //get the group name from the textField
+			if (availableClientsCur.contains(name) == false){
 			availableClientsCur.add(name);//put it into the Observable List for drop-down menu
+			chatters.setItems(availableClientsCur);
 			String Line = groupMembers.getText();//read a Line of String from textField and parse
 			Scanner LineProcess = new Scanner (Line);
 			ArrayList<String> groupIDs = parseIDs(LineProcess);// groupIDs holds all IDs of clients in a group
-			ServerMain.getAllIds.put(name, groupIDs); //holds groupName as string key and List of ID's as values
+//			ServerMain.getAllIds.put(name, groupIDs); //holds groupName as string key and List of ID's as values
 			// now, given "groupName" maps to appropriate "List of Cliend IDs" in that specific group"
+			
+			writer.println(name + "#" + groupIDs);
+			writer.flush();
+			}
+			
+			
+			
 		});
 	}
 
@@ -210,7 +219,7 @@ public class ClientMain extends Application{
 					
 					if(message.charAt(i) == '$'){
 						actualMsg = message.substring(1,message.length());
-						ta.appendText(actualMsg + "\n");						
+						ta.appendText("---Following Message for Everyone---\n" +actualMsg + "\n");						
 					}	
 					else if(message.charAt(i) == '*'){
 						//message = *GroupName#senderID#actualMessage
@@ -224,7 +233,46 @@ public class ClientMain extends Application{
 						//			Client does not accept a message
 						//		endif
 						//   end forLoop
-						//done 
+						//done
+						String groupName = "";
+						
+						while((i < message.length())){
+							if(message.charAt(i) == '#'){
+								hashIndex1 = i;
+								i++;
+								break;
+							}
+							senderID = senderID + message.charAt(i);
+							i++;
+						}
+						groupName = message.substring(0,i-1);
+						if (message.contains(ID) == true){
+							availableClientsCur.add(groupName);
+							chatters.setItems(availableClientsCur);
+						}
+
+						
+					}
+					else if(message.charAt(i) == '@'){
+						String groupName = "";
+						String groupMsg = "";
+						while((i < message.length())){
+							if(message.charAt(i) == '#'){
+								hashIndex1 = i;
+								i++;
+								break;
+							}
+							senderID = senderID + message.charAt(i);
+							i++;
+						}
+						groupName = message.substring(1,i-1);
+						groupMsg = message.substring(i,message.length()); 
+						if (availableClientsCur.contains(groupName) == true ){
+							ta.appendText("---Following Message for GroupChat: " + groupName + "\n" + groupMsg + "\n");
+						}
+						
+						
+						
 					}
 					else{
 					while((i < message.length())){
