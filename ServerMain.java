@@ -32,9 +32,17 @@ public class ServerMain extends Observable {
 			Thread t = new Thread(new ClientHandler(clientSocket));
 			t.start();
 			this.addObserver(writer);
+			
+//			for(String ID : availableClients){
+//				setChanged();
+//				notifyObservers("online#" + ID);
+//			}
+			
 			System.out.println("got a connection");
 		}
 	}
+	
+	
 	class ClientHandler implements Runnable {
 		private BufferedReader reader;
 

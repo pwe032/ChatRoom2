@@ -194,13 +194,27 @@ public class ClientMain extends Application{
 						senderID = senderID + message.charAt(i);
 						i++;
 					}
-					if (senderID.equals("New User") == true){
+					if (senderID.equals("online") == true){
+						addOnlineList = message.substring(i, message.length());
+						if (addOnlineList.equals(null)){}
+						else if(availableClientsCur.indexOf(addOnlineList) == -1 && addOnlineList.equals(ID) == false)
+						{
+							availableClientsCur.add(addOnlineList);
+							chatters.setItems(availableClientsCur);
+						}
+					}
+					else if (senderID.equals("New User") == true){
 						addOnlineList = message.substring(i, message.length());
 						if (addOnlineList.equals(ID) == false){
 							
 						availableClientsCur.add(addOnlineList);
 						chatters.setItems(availableClientsCur);
+						
+						
 						}
+						
+						writer.println("online#"  + ID);
+						writer.flush();
 						
 					}
 					else{
