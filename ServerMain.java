@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
+import java.util.Scanner;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -16,7 +17,7 @@ import javafx.collections.ObservableList;
 public class ServerMain extends Observable {
 	
 	public static ObservableList<String> availableClients = FXCollections.observableArrayList();
-	public static Map<String, ArrayList<String>> getAllIds = new HashMap <String, ArrayList<String>>(); //create a map that holds groupName as string key and List of ID's as values
+	private static Map<String, String> accounts = new HashMap <String, String>(); //map each clients ID to Password; 
 	
 	public static void main(String[] args) {
 		try {
@@ -68,7 +69,15 @@ public class ServerMain extends Observable {
 					int i = 0;
 					System.out.println("server read "+ message);
 					
-					if(message.charAt(i) == '$'){}
+					//check if message is soley for creating an account
+					String line = message;
+					Scanner lineProcess = new Scanner(line);
+					if(lineProcess.next().equals("/crt")){
+						String ID = lineProcess.next();
+						String Password = lineProcess.next();
+						accounts.put(ID, Password);
+						System.out.println("Server added user: " + ID + ", with Password: " + Password);
+					}
 					else{
 					
 					while((i < message.length())){
@@ -94,5 +103,20 @@ public class ServerMain extends Observable {
 			}
 
 		}
+	}
+	
+	/**
+	 * 
+	 * @param line is a scanner connected to a line of String
+	 * @return a List of Strings that holds all IDs of clients in a group
+	 */
+	private ArrayList<String> parseIDs(Scanner line){
+		ArrayList<String> allIDs = new ArrayList<String>();
+		
+		while(line.hasNext()){
+			String ID = line.next();
+			allIDs.add(ID);
+		}
+		return allIDs;
 	}
 }
