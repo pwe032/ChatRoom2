@@ -83,10 +83,10 @@ public class ServerMain extends Observable {
 						String ID = lineProcess.next();
 						String Password = lineProcess.next();
 						if(accounts.containsKey(ID) && (accounts.get(ID).equals(Password))){
-							message = "!true";
+							message = "true";
 						}
 						else{
-							message = "!false";
+							message = "false";
 						}
 					}
 					else{
