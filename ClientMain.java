@@ -33,7 +33,7 @@ public class ClientMain extends Application{
 	private ComboBox <String> requests = new ComboBox<String>();
 	private BufferedReader reader;
 	private PrintWriter writer; 
-	private String ID;
+	private String ID = "123";
 	private String Password;
 	 
 	/*static and private variables*/
@@ -100,10 +100,12 @@ public class ClientMain extends Application{
 				
 				login.setOnAction(e -> {
 					//send a message to a server that the user wants to login
-					//from the server, parse the message and save ID and Password
-					//go to the map and if it cantains the ID and passwords match, call initview2
-					//else  show errorbox
-					ErrorBox.displayError("Login Fail","Error: Invalid Account");
+					String id = userID.getText();
+					String Password = userPassword.getText();
+					this.ID = id;
+					this.Password = Password;
+					writer.println("/log " + id + " " + Password); // a request to log in
+					writer.flush();
 				});
 				userInterfaceGrid.getChildren().addAll(userID, userPassword,createBtn, login);
 				userInterfaceStage.setScene(userInterfaceScene);
@@ -115,6 +117,7 @@ public class ClientMain extends Application{
 		//make chat room interface
 		Button sendBtn = new Button("Send");
 		sendBtn.setPrefHeight(50);
+		Button logoffBtn = new Button("LOGOFF");
 		Button leaveBtn = new Button("LEAVE");
 		// Panel p to hold the label and text field 
 		GridPane paneForTextField = new GridPane(); 
@@ -166,18 +169,22 @@ public class ClientMain extends Application{
 		HBox requestInf = new HBox();
 		requestInf.setSpacing(15);
 		requestInf.getChildren().addAll(request, requests, accept, decline);
+		//Buttons that are useful
+		HBox buttonInf = new HBox();
+		buttonInf.setSpacing(15);
+		buttonInf.getChildren().addAll(leaveBtn, logoffBtn);
 		
 		GridPane.setConstraints(requestInf, 0, 5);
 		GridPane.setConstraints(invitePerson, 0, 3);
 		GridPane.setConstraints(addGroup,0, 4);
 		GridPane.setConstraints(input,0,1);
 		GridPane.setConstraints(invite,0,2);
-		GridPane.setConstraints(leaveBtn, 0, 7);
-		paneForTextField.getChildren().addAll(requestInf, invitePerson, addGroup, area, input, invite, leaveBtn);
+		GridPane.setConstraints(buttonInf, 0, 6);
+		paneForTextField.getChildren().addAll(buttonInf, requestInf, invitePerson, addGroup, area, input, invite);
 
 
 		// Create a scene and place it in the stage 
-		Scene scene = new Scene(paneForTextField, 500, 500); 
+		Scene scene = new Scene(paneForTextField, 500, 550); 
 		chatInterface.setTitle("Chat Room for " + ID); // Set the stage title 
 		chatInterface.setScene(scene); // Place the scene in the stage 
 		chatInterface.show(); // Display the stage 	
@@ -282,7 +289,15 @@ public class ClientMain extends Application{
 					if(message.charAt(i) == '$'){ // $ -> this is all group message
 						actualMsg = message.substring(1,message.length());
 						ta.appendText("---Following Message for Everyone---\n" +actualMsg + "\n");						
-					}	
+					}
+					else if(message.charAt(i) == '!'){
+						if(message.charAt(1) == 't'){
+							
+						}
+						else{
+							ErrorBox.displayError("Login Failed", "Account Not found");
+						}
+					}
 					else if(message.charAt(i) == '*'){ // * 
 						String groupName = "";
 						

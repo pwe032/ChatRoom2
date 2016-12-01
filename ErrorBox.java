@@ -1,18 +1,15 @@
-/* CRITTERS GUI <ErrorMessageBox.java>
- * EE422C Project 5 submission by
- * <Gaurav Nagar>
+/* CRITTERS GUI <ErrorBox.java>
+ * EE422C Project 7 submission by
+ * <Pratyush Behera>
  * <gn3544>
  * <16480>
  * <Minkoo Park>
  * <mp32454>
  * <16480>
- * Slip days used: <0>
+ * Slip days used: <1>
  * Fall 2016
  */
 package assignment7;
-
-import com.sun.prism.paint.Color;
-
 import javafx.geometry.*;
 import javafx.scene.Scene;
 import javafx.scene.control.*;

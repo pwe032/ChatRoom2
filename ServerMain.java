@@ -72,11 +72,22 @@ public class ServerMain extends Observable {
 					//check if message is soley for creating an account
 					String line = message;
 					Scanner lineProcess = new Scanner(line);
-					if(lineProcess.next().equals("/crt")){
+					String code = lineProcess.next();
+					if(code.equals("/crt")){
 						String ID = lineProcess.next();
 						String Password = lineProcess.next();
 						accounts.put(ID, Password);
 						System.out.println("Server added user: " + ID + ", with Password: " + Password);
+					}
+					else if(code.equals("/log")){
+						String ID = lineProcess.next();
+						String Password = lineProcess.next();
+						if(accounts.containsKey(ID) && (accounts.get(ID).equals(Password))){
+							message = "!true";
+						}
+						else{
+							message = "!false";
+						}
 					}
 					else{
 					
