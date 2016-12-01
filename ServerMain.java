@@ -1,3 +1,13 @@
+/* ChatRoom <ServerMain.java>
+ * EE422C Project 7 submission by
+ * <Pratyush Behera>
+ * <pb22426>
+ * <Minkoo Park>
+ * <mp32454>
+ * <16480>
+ * Slip days used: <1>
+ * Fall 2016
+ */
 package assignment7;
 
 import java.io.BufferedReader;
@@ -78,6 +88,13 @@ public class ServerMain extends Observable {
 						String Password = lineProcess.next();
 						accounts.put(ID, Password);
 						System.out.println("Server added user: " + ID + ", with Password: " + Password);
+					}
+					else if(code.equals("/pw")){
+						String ID = lineProcess.next();
+						String Password = lineProcess.next();
+						accounts.remove(ID);
+						accounts.put(ID, Password);
+						System.out.println(ID+"'s password changed to: " + Password);
 					}
 					else if(code.equals("/log")){
 						String ID = lineProcess.next();

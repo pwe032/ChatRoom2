@@ -1,16 +1,18 @@
 package assignment7;
-
+ 
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -22,6 +24,9 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.scene.control.TextArea;
 
@@ -33,8 +38,10 @@ public class ClientMain extends Application{
 	private ComboBox <String> requests = new ComboBox<String>();
 	private BufferedReader reader;
 	private PrintWriter writer; 
-	private String ID = "123";
+	private String ID; 
 	private String Password;
+	private String History = "";
+	private boolean loginAllow;
 	 
 	/*static and private variables*/
 	static GridPane userInterfaceGrid = new GridPane();
@@ -44,7 +51,10 @@ public class ClientMain extends Application{
 	static TextField userID = new TextField();
 	static PasswordField userPassword = new PasswordField();
 	static ObservableList<String> availableClientsCur = FXCollections.observableArrayList();
-	
+	static ObservableList<String> friends = FXCollections.observableArrayList();
+	static ObservableList<String> friendReq = FXCollections.observableArrayList();	
+
+
 	public String getID(){
 		return this.ID;
 	}
@@ -95,6 +105,8 @@ public class ClientMain extends Application{
 					userInterfaceStage.close();
 					availableClientsCur.add("Everyone");
 					chatters.setItems(availableClientsCur);
+					friends.add("HISTORY");
+					invitees.setItems(friends);
 					initView2();//actual chat room
 				});
 				
@@ -106,6 +118,22 @@ public class ClientMain extends Application{
 					this.Password = Password;
 					writer.println("/log " + id + " " + Password); // a request to log in
 					writer.flush();
+					try {
+						TimeUnit.SECONDS.sleep(1);
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} 
+					if(loginAllow == true){
+						writer.println("New User#" + userID.getText());
+						writer.flush();
+						userInterfaceStage.close();
+						availableClientsCur.add("Everyone");
+						chatters.setItems(availableClientsCur);
+						initView2();
+					}
+					else
+						ErrorBox.displayError("Login Failed", "Account not found");
 				});
 				userInterfaceGrid.getChildren().addAll(userID, userPassword,createBtn, login);
 				userInterfaceStage.setScene(userInterfaceScene);
@@ -118,6 +146,7 @@ public class ClientMain extends Application{
 		Button sendBtn = new Button("Send");
 		sendBtn.setPrefHeight(50);
 		Button logoffBtn = new Button("LOGOFF");
+		Button changePw = new Button("Change Password");
 		Button leaveBtn = new Button("LEAVE");
 		// Panel p to hold the label and text field 
 		GridPane paneForTextField = new GridPane(); 
@@ -138,11 +167,10 @@ public class ClientMain extends Application{
 		//dropdown menu layout
 //		ComboBox <String> chatters = new ComboBox<String>();
 		chatters.setPrefWidth(330);
-//		chatters.setItems(ServerMain.availableClientsCur);
-		Label lb = new Label("Friends: ");
+		Label lb = new Label("Friends:");
 		HBox invite = new HBox();
 		invite.setSpacing(15);
-		invite.getChildren().addAll(lb, chatters);
+		invite.getChildren().addAll(lb, invitees);
 		//group adding interface
 		TextField groupName = new TextField();
 		groupName.setPrefWidth(110);
@@ -160,9 +188,9 @@ public class ClientMain extends Application{
 		invitees.setPrefWidth(310);
 		HBox invitePerson = new HBox();
 		invitePerson.setSpacing(19);
-		invitePerson.getChildren().addAll(availableList, invitees, inviteBtn);
+		invitePerson.getChildren().addAll(availableList, chatters, inviteBtn);
 		//friendRequest
-		Label request = new Label ("Request: ");
+		Label request = new Label ("Request: "); 
 		requests.setPrefWidth(200);
 		Button accept = new Button("Accept");
 		Button decline = new Button("Decline");
@@ -172,7 +200,7 @@ public class ClientMain extends Application{
 		//Buttons that are useful
 		HBox buttonInf = new HBox();
 		buttonInf.setSpacing(15);
-		buttonInf.getChildren().addAll(leaveBtn, logoffBtn);
+		buttonInf.getChildren().addAll(logoffBtn, changePw);
 		
 		GridPane.setConstraints(requestInf, 0, 5);
 		GridPane.setConstraints(invitePerson, 0, 3);
@@ -191,23 +219,29 @@ public class ClientMain extends Application{
 		
 		sendBtn.setOnAction( e -> {
 			//figure our receiver's ID
-			String receiver = chatters.getValue();
+			String receiver = invitees.getValue();
 			String sender = ID;
 			// if sending to Group, all clients must accept
-			if (receiver.equals("Everyone")){
-				String x = "$" + ID + ": " + tf.getText();
-			writer.println("$" + ID + ": " + tf.getText());
-			}
+//			if (receiver.equals("Everyone")){
+//				String x = "$" + ID + ": " + tf.getText();
+//			writer.println("$" + ID + ": " + tf.getText() + "#" + friends);
+//			}
 			//elsif it's a distinct group, then selected clients must accept
-			else if(receiver.charAt(0) == '*'){ 
+			if(receiver.charAt(0) == '*'){ 
 				// syntax: *GroupName#senderID#actualMessage
 				writer.println("@" + receiver + "#" + ID + ": " + tf.getText());
+				writer.flush();
+			}
+			else if(receiver.equals("HISTORY")){
+				ta.appendText("******THIS IS YOUR HISTORY BELOW******\n" + History + "******THIS IS YOUR HISTORY ABOVE******\n");
 			}
 			//else it's one-to-one and only two clients must accept
+
 			else{ 
-			writer.println(sender + "#" + receiver + "#" + ID + ": " + tf.getText());
+				writer.println(sender + "#" + receiver + "#" + ID + ": " + tf.getText());
+				writer.flush();
 			}
-			writer.flush();
+			
 			tf.setText("");
 			tf.requestFocus();
 		});
@@ -217,23 +251,28 @@ public class ClientMain extends Application{
 		    public void handle(KeyEvent keyEvent) {
 		        if (keyEvent.getCode() == KeyCode.ENTER)  {
 					//figure our receiver's ID
-					String receiver = chatters.getValue();
+					String receiver = invitees.getValue();
 					String sender = ID;
 					// if sending to Group, all clients must accept
-					if (receiver.equals("Everyone")){
-						String x = "$" + ID + ": " + tf.getText();
-					writer.println("$" + ID + ": " + tf.getText());
-					}
+//					if (receiver.equals("Everyone")){
+//						String x = "$" + ID + ": " + tf.getText();
+//					writer.println("$" + ID + ": " + tf.getText());
+//					}
 					//elsif it's a distinct group, then selected clients must accept
-					else if(receiver.charAt(0) == '*'){ 
+					if(receiver.charAt(0) == '*'){ 
 						// syntax: *GroupName#senderID#actualMessage
 						writer.println("@" + receiver + "#" + ID + ": " + tf.getText());
+						writer.flush();
+					}
+					else if(receiver.equals("HISTORY")){
+						ta.appendText("******THIS IS YOUR HISTORY BELOW******\n" + History + "******THIS IS YOUR HISTORY ABOVE******\n");
 					}
 					//else it's one-to-one and only two clients must accept
 					else{ 
 					writer.println(sender + "#" + receiver + "#" + ID + ": " + tf.getText());
-					}
 					writer.flush();
+					}
+					
 					tf.setText("");
 					tf.requestFocus();
 		        	
@@ -244,9 +283,9 @@ public class ClientMain extends Application{
 		
 		makeGroup.setOnAction( e -> {
 			String name = "*" + groupName.getText(); //get the group name from the textField
-			if (availableClientsCur.contains(name) == false){
-			availableClientsCur.add(name);//put it into the Observable List for drop-down menu
-			chatters.setItems(availableClientsCur);
+			if (friends.contains(name) == false){
+			friends.add(name);//put it into the Observable List for drop-down menu
+			invitees.setItems(friends);
 			String Line = groupMembers.getText();//read a Line of String from textField and parse
 			Scanner LineProcess = new Scanner (Line);
 			ArrayList<String> groupIDs = parseIDs(LineProcess);// groupIDs holds all IDs of clients in a group
@@ -257,6 +296,52 @@ public class ClientMain extends Application{
 			writer.flush();
 			}		
 		});
+		logoffBtn.setOnAction(e -> {
+			availableClientsCur.remove(ID);
+			chatInterface.close();
+			
+		});
+
+		inviteBtn.setOnAction( e -> {
+		
+			String receiver = chatters.getValue();
+			
+			if (receiver.equals("Everyone")){
+//				String x = "$" + ID + ": " + tf.getText();
+			writer.println("$" + receiver + "#" + ID);
+			}
+			else{
+			writer.println("%" + receiver + "#" + ID);
+			}
+			writer.flush();
+			
+			
+		});
+		
+		accept.setOnAction( e -> {
+			
+			String receiver = requests.getValue();
+			writer.println("+" + receiver + "#" + ID);
+			writer.flush();
+			
+			
+		});
+		
+		decline.setOnAction( e -> {
+			
+			String receiver = requests.getValue();
+			writer.println("-" + receiver + "#" + ID);
+			writer.flush();
+			
+			
+		});
+		
+		changePw.setOnAction(e -> {
+			String newPw = NewPassword.resetPassword();
+			writer.println("/pw " + ID + " " + newPw);
+			writer.flush();    
+		});
+
 	}
 
 	private void setUpNetworking() throws Exception {
@@ -278,6 +363,7 @@ public class ClientMain extends Application{
 			
 			try {
 				while ((message = reader.readLine()) != null) { 
+					System.out.println("server sent: " + message);
 					int i = 0;
 					int hashIndex1;
 					int hashIndex2 = 0;
@@ -287,16 +373,108 @@ public class ClientMain extends Application{
 					String actualMsg;
 					
 					if(message.charAt(i) == '$'){ // $ -> this is all group message
-						actualMsg = message.substring(1,message.length());
-						ta.appendText("---Following Message for Everyone---\n" +actualMsg + "\n");						
+//						actualMsg = message.substring(1,message.length());
+						
+//						ta.appendText("---Following Message for Everyone---\n" +actualMsg + "\n");	
+						while((i < message.length())){
+							if(message.charAt(i) == '#'){
+								hashIndex1 = i;
+								i++;
+								break;
+							}
+							i++;
+						}
+						senderID = message.substring(i,message.length());
+						if (senderID.equals(ID) == false){
+						History = History + "--- Received Friend Request from: " +  senderID + "\n";
+						ta.appendText("--- Received Friend Request from: " +  senderID + "\n");
+						friendReq.add(senderID);
+						requests.setItems(friendReq);
+						}
+						
+						
 					}
-					else if(message.charAt(i) == '!'){
-						if(message.charAt(1) == 't'){
+					
+
+					else if(message.contains("true")){
+						loginAllow = true;
+					}
+					else if(message.contains("false")){
+						loginAllow = false;
+					}
+					else if(message.charAt(i) == '+'){
+						while((i < message.length())){
+							if(message.charAt(i) == '#'){
+								hashIndex1 = i;
+								i++;
+								break;
+							}
+							i++;
+						}
+						addOnlineList = message.substring(1,i-1);
+						receiverID = message.substring(i,message.length());
+						if (ID.equals(addOnlineList) && friends.contains(receiverID) == false){
+							friends.add(receiverID);
+							invitees.setItems(friends);
+							History = History + "--- " + receiverID + " accepted your friend request!!!\n";
+							ta.appendText("--- " + receiverID + " accepted your friend request!!!\n");
 							
 						}
-						else{
-							ErrorBox.displayError("Login Failed", "Account Not found");
+						else if(ID.equals(receiverID) && friends.contains(addOnlineList) == false ) {
+							friends.add(addOnlineList);
+							invitees.setItems(friends);
+							int idx = friendReq.indexOf(addOnlineList);
+							friendReq.remove(idx);
+							requests.setItems(friendReq);
 						}
+						
+					}
+					
+					else if(message.charAt(i) == '-'){
+						while((i < message.length())){
+							if(message.charAt(i) == '#'){
+								hashIndex1 = i;
+								i++;
+								break;
+							}
+							i++;
+						}
+						addOnlineList = message.substring(1,i-1);
+						receiverID = message.substring(i,message.length());
+						if (ID.equals(addOnlineList) && friends.contains(receiverID) == false){
+//							friends.add(receiverID);
+//							invitees.setItems(friends);
+							History = History + "--- " + receiverID + " denied your friend request.\n";
+							ta.appendText("--- " + receiverID + " denied your friend request.\n");
+						}
+						else if(ID.equals(receiverID) && friends.contains(addOnlineList) == false ) {
+
+							int idx = friendReq.indexOf(addOnlineList);
+							friendReq.remove(idx);
+							requests.setItems(friendReq);
+						}
+						
+					}
+					else if(message.charAt(i) == '%'){
+						while((i < message.length())){
+							if(message.charAt(i) == '#'){
+								hashIndex1 = i;
+								i++;
+								break;
+							}
+							i++;
+						}
+						
+						addOnlineList = message.substring(1,i-1);
+						if (addOnlineList.equals(ID)){
+							senderID = message.substring(i,message.length());
+							friendReq.add(senderID);
+							requests.setItems(friendReq);
+							History = History + "--- Received Friend Request from: " +  senderID + "\n";
+							ta.appendText("--- Received Friend Request from: " +  senderID + "\n");
+						}
+						
+						
 					}
 					else if(message.charAt(i) == '*'){ // * 
 						String groupName = "";
@@ -311,9 +489,9 @@ public class ClientMain extends Application{
 							i++;
 						}
 						groupName = message.substring(0,i-1);
-						if (message.contains(ID) == true){
-							availableClientsCur.add(groupName);
-							chatters.setItems(availableClientsCur);
+						if (message.contains(ID) == true && friends.contains(groupName) == false){ //MUST CHANGE YA KNOW
+							friends.add(groupName);
+							invitees.setItems(friends);
 						}
 
 						
@@ -332,8 +510,9 @@ public class ClientMain extends Application{
 						}
 						groupName = message.substring(1,i-1);
 						groupMsg = message.substring(i,message.length()); 
-						if (availableClientsCur.contains(groupName) == true ){
-							ta.appendText("---Following Message for GroupChat: " + groupName + "\n" + groupMsg + "\n");
+						if (friends.contains(groupName) == true ){
+							History = History + "--- Following Message for GroupChat: " + groupName + "\n" + groupMsg + "\n";
+							ta.appendText("--- Following Message for GroupChat: " + groupName + "\n" + groupMsg + "\n");
 						}		
 					}
 					else{
@@ -348,7 +527,7 @@ public class ClientMain extends Application{
 					}
 					if (senderID.equals("online") == true){
 						addOnlineList = message.substring(i, message.length());
-						if (addOnlineList.equals(null)){
+						if (addOnlineList==null){
 						}
 						else if(availableClientsCur.indexOf(addOnlineList) == -1 && addOnlineList.equals(ID) == false)
 						{
@@ -358,7 +537,7 @@ public class ClientMain extends Application{
 					}
 					else if (senderID.equals("New User") == true){
 						addOnlineList = message.substring(i, message.length());
-						if (addOnlineList.equals(ID) == false){
+						if (addOnlineList.equals(ID) == false && availableClientsCur.contains(addOnlineList) == false){
 							
 						availableClientsCur.add(addOnlineList);
 						chatters.setItems(availableClientsCur);
@@ -382,6 +561,7 @@ public class ClientMain extends Application{
 					actualMsg = message.substring(hashIndex2, message.length());			
 					//print the wanted message IF the current client ID matches either receiverID or senderID
 					if(idMatch(senderID, receiverID)){
+						History = History + actualMsg + "\n";
 						ta.appendText(actualMsg + "\n");						
 					}
 					

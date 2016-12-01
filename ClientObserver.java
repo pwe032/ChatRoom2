@@ -1,4 +1,13 @@
-
+/* ChatRoom <ClientObserver.java>
+ * EE422C Project 7 submission by
+ * <Pratyush Behera>
+ * <pb22426>
+ * <Minkoo Park>
+ * <mp32454>
+ * <16480>
+ * Slip days used: <1>
+ * Fall 2016
+ */
 package assignment7;
 
 import java.io.OutputStream;

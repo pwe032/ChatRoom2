@@ -1,8 +1,7 @@
-/* CRITTERS GUI <ErrorBox.java>
+/* ChatRoom <ErrorBox.java>
  * EE422C Project 7 submission by
  * <Pratyush Behera>
- * <gn3544>
- * <16480>
+ * <pb22426>
  * <Minkoo Park>
  * <mp32454>
  * <16480>
